@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Bar Chart with Axes</title>
+    <style>
+        .chart {
+            background-color: #f8f8f8;
+            border: 1px solid #cccccc;
+        }
+        .data-label, .axis-label {
+            fill: #000000;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            text-anchor: middle;
+        }
+        .axis-line {
+            stroke: #000000;
+            stroke-width: 2;
+        }
+        .legend-text {
+        fill: #000;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<svg width="1420" height="600" class="chart"></svg>
+
+<script>
+     var data = [
+        { year: '2009', value: 2898 },
+        { year: '2010', value: 2933 },
+        { year: '2011', value: 2677 },
+        { year: '2012', value: 3287 },
+        { year: '2013', value: 3252 },
+        { year: '2014', value: 3169 },
+        { year: '2015', value: 3246 },
+        { year: '2016', value: 3193 },
+        { year: '2017', value: 3168 },
+        { year: '2018', value: 3342 },
+        { year: '2019', value: 3476 },
+        { year: '2020', value: 3710 },
+        { year: '2021', value: 4194 },
+        { year: '2022', value: 4146 },
+    ];
+
+    var maxValue = Math.max(...data.map(d => d.value));
+    var maxBarHeight = 300;
+    var scalingFactor = maxBarHeight / maxValue;
+    var barWidth = 40;
+    var barSpacing = 50;
+    var offset = 100; // Increased offset for the axes
+
+    var svg = document.querySelector('svg');
+    var chartHeight = parseInt(svg.getAttribute("height"));
+    var chartWidth = parseInt(svg.getAttribute("width"));
+
+    // Create Y axis line
+    var yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    yAxis.setAttribute('x1', offset);
+    yAxis.setAttribute('y1', chartHeight - offset);
+    yAxis.setAttribute('x2', offset);
+    yAxis.setAttribute('y2', offset);
+    yAxis.setAttribute('class', 'axis-line');
+    svg.appendChild(yAxis);
+
+    // Create X axis line
+    var xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    xAxis.setAttribute('x1', offset);
+    xAxis.setAttribute('y1', chartHeight - offset);
+    xAxis.setAttribute('x2', chartWidth - offset);
+    xAxis.setAttribute('y2', chartHeight - offset);
+    xAxis.setAttribute('class', 'axis-line');
+    svg.appendChild(xAxis);
+
+    var pathCoordinates = [];
+
+    // Create bars and labels
+    data.forEach(function(d, i) {
+        var barHeight = d.value * scalingFactor;
+        var xPosition = i * (barWidth + barSpacing) + offset;
+        var yPosition = chartHeight - barHeight - offset;
+
+        pathCoordinates.push({x: xPosition + (barWidth / 2), y: yPosition});
+
+        // Create a bar
+        var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', xPosition);
+        rect.setAttribute('y', yPosition);
+        rect.setAttribute('width', barWidth);
+        rect.setAttribute('height', barHeight);
+        rect.setAttribute('fill', '#74c0fc');
+        rect.setAttribute('data-year', d.year);
+        svg.appendChild(rect);
+
+        // Create a label for the bar value
+        var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', xPosition + (barWidth / 2));
+        text.setAttribute('y', yPosition - 10);
+        text.setAttribute('class', 'data-label');
+        text.textContent = d.value;
+        svg.appendChild(text);
+
+        // Create a label for the X axis (year)
+        var yearLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        yearLabel.setAttribute('x', xPosition + (barWidth / 2));
+        yearLabel.setAttribute('y', chartHeight - offset + 20);
+        yearLabel.setAttribute('class', 'axis-label');
+        yearLabel.textContent = d.year;
+        svg.appendChild(yearLabel);
+    });
+    var pathData = pathCoordinates.map((point, index) => 
+    `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
+    ).join(' ');
+    // Creating the path element
+    var pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    pathElement.setAttribute('d', pathData);
+    pathElement.setAttribute('fill', 'none');
+    pathElement.setAttribute('stroke', 'red');
+    pathElement.setAttribute('stroke-width', '2');
+
+    // Adding the path to the SVG
+    svg.appendChild(pathElement);
+
+    // Create the second Y axis line on the right
+    var yAxisRight = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    yAxisRight.setAttribute('x1', chartWidth - offset);
+    yAxisRight.setAttribute('y1', chartHeight - offset);
+    yAxisRight.setAttribute('x2', chartWidth - offset);
+    yAxisRight.setAttribute('y2', offset);
+    yAxisRight.setAttribute('class', 'axis-line');
+    svg.appendChild(yAxisRight);
+
+    // Create labels for the Y axes
+    var yAxisLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    yAxisLabel.textContent = 'İntihar sayısı'; // label for the original Y axis
+    yAxisLabel.setAttribute('transform', 'rotate(-90)');
+    yAxisLabel.setAttribute('x', -chartHeight / 2);
+    yAxisLabel.setAttribute('y', offset / 2);
+    yAxisLabel.setAttribute('class', 'axis-label');
+    yAxisLabel.setAttribute('text-anchor', 'middle');
+    svg.appendChild(yAxisLabel);
+
+    var yAxisRightLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    yAxisRightLabel.textContent = 'Yüz binde'; // label for the second Y axis
+    yAxisRightLabel.setAttribute('transform', `rotate(-90) translate(${-chartHeight / 2},${-chartWidth + (1.5 * offset)})`);
+    yAxisRightLabel.setAttribute('class', 'axis-label');
+    yAxisRightLabel.setAttribute('text-anchor', 'middle');
+    svg.appendChild(yAxisRightLabel);
+
+    // Adding Y-axis values for the right Y-axis
+    var rightAxisValues = [1, 2, 3, 4, 5]; // The values for your right Y-axis
+    rightAxisValues.forEach(function(value) {
+        var yAxisValue = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        yAxisValue.textContent = value.toString();
+        yAxisValue.setAttribute('x', chartWidth - (offset / 2) -35);
+        yAxisValue.setAttribute('y', chartHeight - offset - ((value / rightAxisValues.length) * maxBarHeight));
+        yAxisValue.setAttribute('class', 'axis-label');
+        yAxisValue.setAttribute('text-anchor', 'middle');
+        svg.appendChild(yAxisValue);
+    });
+
+    // Create the right Y-axis label
+    var rightYAxisLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    rightYAxisLabel.textContent = "(Yüz binde)"; // The text for your label
+
+    // Position the label. Adjust these values as needed to place the label where you want it.
+    rightYAxisLabel.setAttribute('x', chartWidth - 60); // Position label near the right edge of the SVG. Adjust if needed.
+    rightYAxisLabel.setAttribute('y', 90); // Position label towards the top of the SVG. Adjust if needed.
+    rightYAxisLabel.setAttribute('class', 'axis-label'); // This assumes you have relevant CSS for this class.
+    svg.appendChild(rightYAxisLabel);
+
+    // Create the left Y-axis label
+      var leftYAxisLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      leftYAxisLabel.textContent = "(İntihar sayısı)"; // The text for your label
+
+    // Position the label. Adjust these values as needed to place the label where you want it.
+    leftYAxisLabel.setAttribute('x', 60); // Position label near the right edge of the SVG. Adjust if needed.
+    leftYAxisLabel.setAttribute('y', 90); // Position label towards the top of the SVG. Adjust if needed.
+    leftYAxisLabel.setAttribute('class', 'axis-label'); // This assumes you have relevant CSS for this class.
+    svg.appendChild(leftYAxisLabel);
+    // Create a legend at the bottom of the chart
+    var legend = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    legend.setAttribute('class', 'legend');
+    legend.setAttribute('transform', `translate(${offset},${chartHeight - (offset / 2)})`);
+    svg.appendChild(legend);
+
+    // Legend for blue color
+    var blueRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    blueRect.setAttribute('width', 20);
+    blueRect.setAttribute('height', 20);
+    blueRect.setAttribute('fill', '#74c0fc');
+    legend.appendChild(blueRect);
+
+    var blueText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    blueText.textContent = 'İntihar sayısı';
+    blueText.setAttribute('x', 30); // Position text right of the colored box
+    blueText.setAttribute('y', 15);
+    blueText.setAttribute('class', 'legend-text');
+    legend.appendChild(blueText);
+
+    var redLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    redLine.setAttribute('x1', 0);
+    redLine.setAttribute('y1', 40);
+    redLine.setAttribute('x2', 20);
+    redLine.setAttribute('y2', 40);
+    redLine.setAttribute('stroke', 'red');
+    redLine.setAttribute('stroke-width', '2');
+    legend.appendChild(redLine);
+
+    var redText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    redText.textContent = 'Kaba intihar hızı';
+    redText.setAttribute('x', 30); // Position text right of the line
+    redText.setAttribute('y', 45);
+    redText.setAttribute('class', 'legend-text');
+    legend.appendChild(redText);
+
+    // Create Y axis bins/labels
+    var numBins = 5;
+    var binSize = maxValue / numBins;
+        // Adjusted Y axis bins/labels
+    var yAxisValues = [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000];
+    var yAxisPositionAdjustment = 20; // Increase this value if you want to move the labels further to the left
+    var tickMarkLength = 10; // Length of the tick marks
+
+    yAxisValues.forEach(function(value, i) {
+        
+        var binLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        binLabel.setAttribute('x', offset - yAxisPositionAdjustment); // Adjust label position
+        binLabel.setAttribute('y', chartHeight - ((value / maxValue) * maxBarHeight) - offset);
+        binLabel.setAttribute('text-anchor', 'end');
+        binLabel.setAttribute('class', 'axis-label');
+        binLabel.textContent = value;
+        svg.appendChild(binLabel);
+    });
+
+</script>
+
+</body>
+</html>
